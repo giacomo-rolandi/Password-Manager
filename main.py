@@ -1,3 +1,19 @@
+#Update needed:
+#1) Add a function to delete a password
+#2) Make the repo useful by adding a README file
+#3) Make the repo useful by deleting my comments and passwords
+#4) Build a GUI for the program
+#5) Add a function for search a password
+#6) Build a db for the passwords instead of a txt file (maybe mysql)
+#7) Add a function to verify the security of the passwords (length, special characters, re-used passwords, etc)
+#8) Add a function to generate a strong password
+#9) Add a function to change the master password
+#10) Add the syncronization of the passwords with the cloud or into a personal server
+#11) Add a function to export the passwords into a file
+#12) Create an extension for the browser
+
+
+
 #This is a Password Manager program that stores passwords for different accounts and allows the user to retrieve them.
 #The passwords are stored in a file called data.txt in the same directory as the program.
 #The program uses the cryptography library to encrypt and decrypt the passwords.
