@@ -1,18 +1,3 @@
-#Update needed:
-#1) Add a function to delete a password
-#2) Make the repo useful by adding a README file
-#3) Make the repo useful by deleting my comments and passwords
-#4) Build a GUI for the program
-#5) Add a function for search a password
-#6) Build a db for the passwords instead of a txt file (maybe mysql)
-#7) Add a function to verify the security of the passwords (length, special characters, re-used passwords, etc)
-#8) Add a function to generate a strong password
-#9) Add a function to change the master password
-#10) Add the syncronization of the passwords with the cloud or into a personal server
-#11) Add a function to export the passwords into a file
-#12) Create an extension for the browser
-
-
 
 #This is a Password Manager program that stores passwords for different accounts and allows the user to retrieve them.
 #The passwords are stored in a file called data.txt in the same directory as the program.
@@ -20,6 +5,15 @@
 
 import hashlib as hl
 from cryptography.fernet import Fernet
+import base64
+
+
+#Function to generate the key from the master password
+def generate_key(master_password):
+    key = hl.sha256(master_password.encode()).digest()
+    key_base64 = base64.urlsafe_b64encode(key)
+    key = key_base64
+    return key
 
 
 #Function to create a hash of the password
@@ -37,7 +31,7 @@ def check_password(input_password, stored_hash):
     
 
 #function to add a new password to the data file
-def add_passwd():
+def add_passwd(f):
     text = []
     replace = False
     print("\nHello bro! You are now adding a new password.")
@@ -45,32 +39,49 @@ def add_passwd():
     username = input("Enter the username/email:  ")
     password = input("Enter the password:  ")
 
-    with open("data.txt", "r") as file:
+    with open("data.txt", "rb") as file:
         for line in file:
-            if domain in line:
-                line = line.replace(line, f"{domain} {username} {password}\n")
+            decrypted_line = f.decrypt(line.strip()).decode()
+            if domain in decrypted_line:
                 replace = True
-            text.append(line)
+            else:
+                text.append(line.strip())  # Add the line to the list as it is
 
-    with open("data.txt", "w") as file:                
+    with open("data.txt", "wb") as file:                
         if replace == True:
-            for line in text:
-                file.write(line)
+            # If the password needs to be replaced, encrypt the new password and add it to the list
+            text.append(f.encrypt(f"{domain} {username} {password}".encode()))
         else:
-            text.append(f"{domain} {username} {password}\n")
-            for line in text:
-                file.write(line)    
+            # If the password does not need to be replaced, just encrypt the new password and add it to the list
+            text.append(f.encrypt(f"{domain} {username} {password}".encode()))
+        for line in text:
+            file.write(line + b'\n')  # Write each line to the file    
 
 
 #function to view existing passwords in the data file
-def view_passwd():
+def view_passwd(f):
     print("\nHello bro! You are now viewing your passwords.\n")
-    with open("data.txt", "r") as file:
+    with open("data.txt", "rb") as file:
         for line in file:
-            print(line)  
-    
+            line = line.strip()
+            print(f.decrypt(line).decode())
     
 
+#function to delete a password from the data file
+def delete_passwd(f):
+    text = []
+    print("\nHello bro! You are now deleting a password.")
+    domain = input("Enter the domain:  ")
+
+    with open("data.txt", "rb") as file:
+        for line in file:
+            decrypted_line = f.decrypt(line.strip()).decode()
+            if domain not in decrypted_line:
+                text.append(line.strip())  # Add the line to the list as it is
+
+    with open("data.txt", "wb") as file:                
+        for line in text:
+            file.write(line + b'\n')  # Write each line to the file
 
 
 print("\nWelcome to the Password Manager!\n")
@@ -96,25 +107,31 @@ else:
     with open("data.txt", "w") as file:
         file.write("")
 
+    
+#Generate the key from the master password
+f = Fernet(generate_key(master_password))
 
 
 choice = 0
 
 #Navigate to the main menu
-while (choice != 3):       
+while (choice != 4):       
     print("\nYou are now in the main menu. Please choose what you would like to do.")
     print("""
-        1) Store a password 
+        1) Store a password / Renew a password
         2) View existing ones
-        3) Exit
+        3) Delete a password
+        4) Exit
         """)
     choice = int(input())
 
     if choice == 1:
-        add_passwd()
+        add_passwd(f)
     elif choice == 2:
-        view_passwd()
+        view_passwd(f)
     elif choice == 3:
+        delete_passwd(f)
+    elif choice == 4:
         break
     else:
         print("Invalid choice. Please try again.")
